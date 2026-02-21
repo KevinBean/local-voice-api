@@ -1,0 +1,24 @@
+# Local Voice API dependencies
+
+# Web framework
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+python-multipart>=0.0.9
+
+# STT
+faster-whisper>=1.0.0
+
+# LLM
+httpx>=0.27.0
+openai>=1.20.0
+
+# TTS — primary (kokoro-onnx: lightweight, no spacy/blis, works on Python 3.13)
+kokoro-onnx>=0.4.0
+soundfile>=0.12.1
+numpy>=1.24.0
+
+# TTS — fallback
+edge-tts>=6.1.9
+
+# Core
+pydantic>=2.0.0

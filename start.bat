@@ -18,6 +18,6 @@ REM set OPENAI_MODEL=gpt-4o-mini
 REM Add ffmpeg to PATH if not already present
 set PATH=C:\ffmpeg\bin;%PATH%
 
-echo Starting Local Voice API on port 8600...
-uvicorn server:app --host 0.0.0.0 --port 8600 --reload
+echo Starting Local Voice API on port 8601 (dev mode)...
+uvicorn server:app --host 0.0.0.0 --port 8601 --reload
 pause

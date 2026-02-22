@@ -5,7 +5,7 @@ All settings are driven by environment variables with sensible defaults.
 import os
 
 HOST = os.getenv("HOST", "0.0.0.0")
-PORT = int(os.getenv("PORT", "8600"))
+PORT = int(os.getenv("PORT", "8601"))
 
 # ── STT (faster-whisper) ──────────────────────────────────────────────────────
 WHISPER_MODEL   = os.getenv("WHISPER_MODEL",   "base")     # tiny/base/small/medium/large-v3

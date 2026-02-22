@@ -28,7 +28,7 @@ pip install -r requirements.txt
 start.bat
 ```
 
-Server starts at `http://localhost:8600`.
+Server starts at `http://localhost:8601`.
 
 ## API endpoints
 
@@ -78,9 +78,43 @@ All settings are environment variables (see `config.py`):
 American English: `af_heart`, `af_bella`, `af_sarah`, `am_adam`, `am_michael`
 British English: `bf_emma`, `bf_isabella`, `bm_george`, `bm_lewis`
 
+## Running as a Windows Service
+
+The API can run automatically at login with no visible window.
+
+### Quick setup
+
+```bat
+REM 1. Register Task Scheduler entry (one-time, requires admin for schtasks /sc onlogon)
+powershell -ExecutionPolicy Bypass -File create-task.ps1
+
+REM 2. Or use Startup folder (no admin needed — already done by create-shortcut.ps1)
+powershell -ExecutionPolicy Bypass -File create-shortcut.ps1
+```
+
+### Management commands
+
+| Script | Purpose |
+|--------|---------|
+| `service-start.bat` | Start the API (via Task Scheduler or directly) |
+| `service-stop.bat` | Stop the running API |
+| `service-status.bat` | Check if API is running + health check |
+| `start.bat` | Dev mode with `--reload` (visible terminal) |
+
+### How it works
+
+- `service-launcher.vbs` runs `service.bat` with a hidden window (no console flash)
+- `service.bat` sets env vars and launches `uvicorn` in production mode (no `--reload`)
+- Logs are written to `local-voice-api.log`
+- Auto-starts at user logon via Windows Startup folder shortcut
+
+### Remote access (Tailscale)
+
+From MacBook: `curl http://100.91.167.57:8601/health`
+
 ## TalkBuddy integration
 
 In TalkBuddy Settings → **Connection Mode** → select **Local Voice API**.
-Enter `http://localhost:8600` (or your PC's LAN IP for cross-device access).
+Enter `http://localhost:8601` (or `http://100.91.167.57:8601` from MacBook via Tailscale).
 Click **Test Connection** → green = ready.
 Start Practice → hold mic button → release to send.

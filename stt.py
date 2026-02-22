@@ -32,8 +32,16 @@ def _get_model():
     return _model
 
 
-async def transcribe(audio_bytes: bytes, language: Optional[str] = None) -> dict:
-    """Transcribe raw audio bytes → {text, language}."""
+async def transcribe(
+    audio_bytes: bytes,
+    language: Optional[str] = None,
+    word_timestamps: bool = False,
+) -> dict:
+    """Transcribe raw audio bytes → {text, language}.
+
+    When *word_timestamps* is True the response also contains a ``words``
+    list with per-word start/end times and confidence (probability).
+    """
 
     def _run():
         model = _get_model()
@@ -41,8 +49,26 @@ async def transcribe(audio_bytes: bytes, language: Optional[str] = None) -> dict
         kwargs: dict = {}
         if language:
             kwargs["language"] = language
+        if word_timestamps:
+            kwargs["word_timestamps"] = True
         segments, info = model.transcribe(audio_io, **kwargs)
-        text = " ".join(seg.text for seg in segments).strip()
-        return {"text": text, "language": info.language}
+
+        text_parts = []
+        words = []
+        for seg in segments:
+            text_parts.append(seg.text)
+            if word_timestamps and seg.words:
+                for w in seg.words:
+                    words.append({
+                        "word": w.word.strip(),
+                        "start": round(w.start, 3),
+                        "end": round(w.end, 3),
+                        "probability": round(w.probability, 3),
+                    })
+
+        result = {"text": " ".join(text_parts).strip(), "language": info.language}
+        if word_timestamps:
+            result["words"] = words
+        return result
 
     return await asyncio.to_thread(_run)

@@ -3,7 +3,7 @@ Local Voice API — LLM module
 Dual-provider abstraction: Ollama (default) or OpenAI.
 Callers can pass provider= per-request to override the server default.
 """
-from typing import Optional
+from typing import AsyncGenerator, Optional
 
 import httpx
 
@@ -45,6 +45,52 @@ async def chat(
     if p == "openai":
         return await _chat_openai(messages, model or config.OPENAI_MODEL)
     return await _chat_ollama(messages, model or config.OLLAMA_MODEL)
+
+
+async def chat_stream(
+    messages: list,
+    model: Optional[str] = None,
+    provider: Optional[str] = None,
+) -> AsyncGenerator[str, None]:
+    """Yield text chunks from LLM as they arrive."""
+    p = provider or config.LLM_PROVIDER
+    if p == "openai":
+        async for chunk in _chat_openai_stream(messages, model or config.OPENAI_MODEL):
+            yield chunk
+    else:
+        async for chunk in _chat_ollama_stream(messages, model or config.OLLAMA_MODEL):
+            yield chunk
+
+
+async def _chat_openai_stream(messages: list, model: str) -> AsyncGenerator[str, None]:
+    client = _get_openai_client()
+    response = await client.chat.completions.create(
+        model=model,
+        messages=messages,
+        stream=True,
+    )
+    async for chunk in response:
+        delta = chunk.choices[0].delta
+        if delta.content:
+            yield delta.content
+
+
+async def _chat_ollama_stream(messages: list, model: str) -> AsyncGenerator[str, None]:
+    client = _get_ollama_client()
+    async with client.stream(
+        "POST",
+        "/api/chat",
+        json={"model": model, "messages": messages, "stream": True},
+    ) as response:
+        response.raise_for_status()
+        async for line in response.aiter_lines():
+            if not line:
+                continue
+            import json
+            data = json.loads(line)
+            content = data.get("message", {}).get("content", "")
+            if content:
+                yield content
 
 
 async def _chat_openai(messages: list, model: str) -> str:
